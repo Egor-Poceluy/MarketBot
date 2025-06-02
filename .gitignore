@@ -1,0 +1,7 @@
+build
+CMakeLists.txt.user
+.CMakeLists.txt.swp
+.cache/
+.gitignore.swp
+.travis.yml
+dockerfile
