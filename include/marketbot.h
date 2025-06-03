@@ -1,10 +1,28 @@
 #pragma once
 
 #include <string>
+#include <map>
+#include <curl/curl.h>
+#include "notifier.h"
+
 
 class MarketBot {
 public:
-    void notify(const std::string& item_name, const std::string& price, const std::string& flags) const noexcept;
-    void check_items(const std::string& api_key) const noexcept;
+    MarketBot(const std::string& market_api_key)
+        : api_key(market_api_key) {}
+
+    void notify_sale(const std::string& item, const std::string& price) const noexcept;
+    void notify_price_changed(const std::string& item, const std::string& price) const noexcept;
+
+    void check_items() const noexcept;
+    void check_tracked_items() const noexcept;
+
+    void add_tracked_item(const std::string& item_name, double price) noexcept;
+    void remove_tracked_item(const std::string& item_name) noexcept;
+
+private:
+    std::map<std::string, double> tracked_items;
+    std::string api_key;
+    Notifier notifier;
 };
 

@@ -23,6 +23,7 @@ std::string Logger::level_to_str(Level level) noexcept {
         case Level::INFO:       return "INFO";
         case Level::WARNING:    return "WARNING";
         case Level::ERROR:      return "ERROR";
+        case Level::IMPORTANT:  return "IMPORTANT";
         default:                return "NOTYPE";
     }
 }
@@ -35,6 +36,7 @@ const char* Logger::level_to_color(Level level) noexcept {
         case Level::INFO:       return WHITE;
         case Level::WARNING:    return YELLOW;
         case Level::ERROR:      return RED;
+        case Level::IMPORTANT:  return LIGHT_BLUE;
         default:                return RESET;
     }
 }
