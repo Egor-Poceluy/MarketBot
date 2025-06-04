@@ -2,9 +2,8 @@
 #include <logger.h>
 #include <curl/curl.h>
 
-void Notifier::send_notification(Type type,
-                                 const std::string& item_name,
-                                 const std::string& price,
+void Notifier::send_notification(const std::string& title,
+                                 const std::string& body,
                                  const std::string& flags) const noexcept {
     CURL* curl = curl_easy_init();
     std::string response;
@@ -14,12 +13,6 @@ void Notifier::send_notification(Type type,
         return;
     }
 
-    std::string title = (type == Type::Sale) ? "Продажа предмета" : "Изменение цены";
-
-    std::string body_text = (type == Type::Sale)
-        ? "У вас купили " + item_name + " за " + price + " RUB"
-        : "Цена на " + item_name + " изменилась: " + price + " RUB";
-
     auto url_encode = [](CURL* curl, const std::string& str) -> std::string {
         char* encoded = curl_easy_escape(curl, str.c_str(), str.size());
         std::string result(encoded);
@@ -28,7 +21,7 @@ void Notifier::send_notification(Type type,
     };
 
     std::string encoded_title = url_encode(curl, title);
-    std::string encoded_body = url_encode(curl, body_text);
+    std::string encoded_body = url_encode(curl, body);
 
     std::string url = "https://api.day.app/API_KEY/"
                     + encoded_title  + '/'
@@ -52,8 +45,7 @@ void Notifier::send_notification(Type type,
         Logger::log("Ответ сервера: " + response, Logger::Level::ERROR);
     }
     else {
-        Logger::log("Уведомление отправлено: " + body_text);
-        Logger::log("Ответ сервера: " + response);
+        Logger::log("Уведомление отправлено: " + body);
     }
     curl_easy_cleanup(curl);
 }

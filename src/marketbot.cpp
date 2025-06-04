@@ -5,12 +5,12 @@
 
 
 void MarketBot::notify_sale(const std::string& item_name, const std::string& price) const noexcept {
-    notifier.send_notification(Notifier::Type::Sale, item_name, price, "level=critical&volume=10");
+    notifier.send_notification("Предмет продан", "У вас купили " + item_name + " за " + price + " RUB", "sound=Alarm");
 }
 
 
 void MarketBot::notify_price_changed(const std::string& item_name, const std::string& price) const noexcept {
-    notifier.send_notification(Notifier::Type::PriceChanged, item_name, price, "group=RiseInPrice&sound=multiwayinvitation");
+    notifier.send_notification("Цена поднялась", "Цена на " + item_name + " изменилась: " + price + " RUB", "group=RiseInPrice&sound=multiwayinvitation");
 }
 
 
@@ -62,10 +62,14 @@ void MarketBot::check_items() const noexcept {
                 std::string item_name = item["market_hash_name"].get<std::string>();
                 std::string price = std::to_string(item["price"].get<double>());
 
-                for(int i = 0; i < 10; ++i) {
-                    notify_sale(item_name, price);
-                    std::this_thread::sleep_for(std::chrono::seconds(5));
-                }
+                notify_sale(item_name, price);
+                std::this_thread::sleep_for(std::chrono::seconds(30));
+
+                notify_sale(item_name, price);
+                std::this_thread::sleep_for(std::chrono::seconds(30));
+
+                notify_sale(item_name, price);
+                std::this_thread::sleep_for(std::chrono::seconds(30));
             }
         }
     } catch (const std::exception& e) {
@@ -123,13 +127,17 @@ void MarketBot::check_tracked_items() const noexcept {
             }
 
             if(json["data"].empty()) {
-                Logger::log("Сейчас предмет " + item_name + " не продается", Logger::Level::IMPORTANT);
+                Logger::log("Сейчас предмет " + item_name + " не продается");
                 continue;
             }
 
-            double current_price = json["data"][0]["price"].get<double>() / 100; // тут проблема с копейками!
+            double current_price = json["data"][0]["price"].get<double>() / 100;
+
+            std::stringstream formated_current_price;
+            formated_current_price << std::fixed << std::setprecision(2) << current_price;
+
             if(current_price >= price) {
-                notify_price_changed(item_name, std::to_string(current_price));
+                notify_price_changed(item_name, formated_current_price.str());
             }
         } catch (std::exception& e) {
             Logger::log(static_cast<std::string>("Ошибка при парсинге JSON: ") + e.what(), Logger::Level::ERROR);
@@ -141,23 +149,12 @@ void MarketBot::check_tracked_items() const noexcept {
 
 
 void MarketBot::add_tracked_item(const std::string& item_name, double price) noexcept {
-    if(tracked_items.find(item_name) == tracked_items.end()) {
-        tracked_items[item_name] = price;
-        Logger::log("Предмет " + item_name + " добавлен в список отслеживаемых");
-    }
-    else {
-        tracked_items[item_name] = price;
-        Logger::log("Предмет " + item_name + " уже отслеживается", Logger::Level::IMPORTANT);
-        Logger::log("Установлена новая цена - " + std::to_string(price), Logger::Level::IMPORTANT);
-    }
+    tracked_items[item_name] = price;
+    Logger::log("Предмет " + item_name + " добавлен в список отслеживаемых", Logger::Level::IMPORTANT);
 }
 
 
 void MarketBot::remove_tracked_item(const std::string& item_name) noexcept {
-    if(tracked_items.find(item_name) != tracked_items.end()) {
-        tracked_items.erase(item_name);
-        Logger::log("Предмет " + item_name + " удален из списка отслеживаемых");
-    }
-    else
-        Logger::log("Предмет " + item_name + " не отслеживался", Logger::Level::IMPORTANT);
+    tracked_items.erase(item_name);
+    Logger::log("Предмет " + item_name + " удален из списка отслеживаемых", Logger::Level::IMPORTANT);
 }
