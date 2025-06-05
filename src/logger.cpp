@@ -4,10 +4,11 @@
 #include <chrono>
 #include <iomanip>
 
-
 void Logger::log(const std::string &message, Level level) noexcept {
     auto now = std::chrono::system_clock::now();
     auto now_time = std::chrono::system_clock::to_time_t(now);
+
+    std::lock_guard<std::mutex> lock(mutex);
 
     std::cout << level_to_color(level)
               << '[' << std::put_time(std::localtime(&now_time), "%T") << ']'

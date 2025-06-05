@@ -2,7 +2,7 @@
 
 #include <string>
 #include <map>
-#include <curl/curl.h>
+#include "mycurlhelper.h"
 #include "notifier.h"
 
 
@@ -23,6 +23,8 @@ public:
 private:
     std::map<std::string, double> tracked_items;
     std::string api_key;
+
     Notifier notifier;
+    MyCurlHelper my_curl_helper;
 };
 

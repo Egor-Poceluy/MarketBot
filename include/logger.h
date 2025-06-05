@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <mutex>
 
 class Logger {
 public:
@@ -20,4 +21,5 @@ private:
     static constexpr const char* LIGHT_BLUE = "\033[1;34m";
 
     static inline bool colors_enabled = true;
+    static inline std::mutex mutex;
 };

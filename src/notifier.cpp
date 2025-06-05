@@ -1,51 +1,17 @@
 #include "notifier.h"
-#include <logger.h>
-#include <curl/curl.h>
+#include "logger.h"
 
 void Notifier::send_notification(const std::string& title,
                                  const std::string& body,
                                  const std::string& flags) const noexcept {
-    CURL* curl = curl_easy_init();
-    std::string response;
 
-    if (!curl) {
-        Logger::log("Ошибка инициализации CURL", Logger::Level::ERROR);
-        return;
-    }
+    std::string encoded_title = my_curl_helper.url_encode(title);
+    std::string encoded_body = my_curl_helper.url_encode(body);
 
-    auto url_encode = [](CURL* curl, const std::string& str) -> std::string {
-        char* encoded = curl_easy_escape(curl, str.c_str(), str.size());
-        std::string result(encoded);
-        curl_free(encoded);
-        return result;
-    };
+    std::string response = my_curl_helper.get("https://api.day.app/API_KEY/"
+                                              + encoded_title  + '/'
+                                              + encoded_body   + '?'
+                                              + flags);
 
-    std::string encoded_title = url_encode(curl, title);
-    std::string encoded_body = url_encode(curl, body);
-
-    std::string url = "https://api.day.app/API_KEY/"
-                    + encoded_title  + '/'
-                    + encoded_body   + '?'
-                    + flags;
-
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, +[](char* ptr, size_t size, size_t nmemb, std::string* data) -> size_t {
-        if (data) {
-            data->append(ptr, size * nmemb);
-            return size * nmemb;
-        }
-        return 0;
-    });
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
-
-    CURLcode res = curl_easy_perform(curl);
-    if (res != CURLE_OK) {
-        Logger::log(static_cast<std::string>("Уведомление не отправлено: ") + curl_easy_strerror(res), Logger::Level::ERROR);
-        Logger::log("Ответ сервера: " + response, Logger::Level::ERROR);
-    }
-    else {
-        Logger::log("Уведомление отправлено: " + body);
-    }
-    curl_easy_cleanup(curl);
+    Logger::log("Уведомление отправлено");
 }
